@@ -4,7 +4,8 @@
 CREATE TABLE users(
     id SERIAL PRIMARY KEY,
     username VARCHAR(25) UNIQUE NOT NULL,
-    name VARCHAR(30) NOT NULL
+    name VARCHAR(30) NOT NULL,
+    password TEXT NOT NULL
 );
 
 CREATE TABLE user_profiles(
