@@ -3,9 +3,10 @@ package models
 import "time"
 
 type Group struct {
-	Id    uint64 `db:"id"`
-	Title string `db:"title"`
-	Link  string `db:"link"`
+	Id      uint64 `db:"id"`
+	Title   string `db:"title"`
+	Link    string `db:"link"`
+	OwnerId uint64 `db:"owner_id"`
 }
 
 type GroupProfile struct {

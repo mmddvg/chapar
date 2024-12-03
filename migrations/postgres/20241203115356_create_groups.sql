@@ -4,7 +4,8 @@
 CREATE TABLE groups(
     id SERIAL PRIMARY KEY,
     title VARCHAR(30) NOT NULL,
-    link VARCHAR(25) UNIQUE NOT NULL
+    link VARCHAR(25) UNIQUE NOT NULL,
+    owner_id BIGINT REFERENCES users(id)
 );
 
 CREATE TABLE group_profiles(
