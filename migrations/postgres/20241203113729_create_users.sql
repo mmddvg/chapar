@@ -21,10 +21,19 @@ CREATE TABLE contacts(
     PRIMARY KEY(user_id,contact_id)
 );
 
+CREATE TABLE blocked(
+    user_id BIGINT REFERENCES users(id),
+    target_id BIGINT REFERENCES users(id),
+    CONSTRAINT cant_block_self CHECK (user_id != target_id) 
+)
+
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+
+DROP TABLE blocked;
+
 DROP TABLE contacts;
 
 DROP TABLE user_profiles;
