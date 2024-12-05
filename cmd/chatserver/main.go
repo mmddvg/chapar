@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	HttpWs "mmddvg/chapar/pkg/http"
+	"mmddvg/chapar/pkg/services"
+)
 
 func main() {
-	fmt.Println("hello world")
+	app := services.NewApp()
+	app.Run()
+	HttpWs.Initiate(app)
 }

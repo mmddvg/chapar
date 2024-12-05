@@ -8,7 +8,7 @@ func (h *Application) Run() {
 				h.register(re)
 			case unre := <-h.UnregChann:
 				h.unregister(unre)
-			case m := <-h.Channel:
+			case m := <-h.channel:
 				h.handleMessage(m)
 			}
 		}
@@ -62,6 +62,10 @@ func (h *Application) unregister(arg UnRegister) {
 	if len(v.devices) == 0 {
 		delete(h.users, arg.Id)
 	}
+}
+
+func (h *Application) SendMessage(m Message) {
+	h.channel <- m
 }
 
 // when a user wants to write a message , the message is sent to `Channel` channel to be broadcasted
