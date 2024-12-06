@@ -1,8 +1,11 @@
 package models
 
+import "mmddvg/chapar/pkg/requests"
+
 type UserDB interface {
-	SignUp(NewUser) (User, error)
+	SignUp(requests.User) (User, error)
 	Get(uint64) (User, error)
+	GetByUsername(string) (User, error)
 	GetContacts(uint64) ([]uint64, error)
 	IsContact(userId uint64, contactId uint64) (bool, error)
 	AddContact(userId uint64, contactId uint64) ([]uint64, error)

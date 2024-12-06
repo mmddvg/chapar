@@ -19,6 +19,8 @@ func Initiate(app *services.Application) {
 
 	e.GET("/hello", h.Hello)
 	e.GET("/message", h.chat)
+	e.POST("/signup", h.SignUp)
+	e.POST("/login", h.Login)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -7,12 +7,12 @@ type ErrDuplicate struct {
 	field  string
 }
 
-func NewErrDuplicate(entityName string, field string) ErrDuplicate {
+func NewDuplicate(entityName string, field string) ErrDuplicate {
 	return ErrDuplicate{entity: entityName, field: field}
 }
 
 func (err ErrDuplicate) Error() string {
-	if err.field != "" {
+	if err.field == "" {
 		return "duplicate entry"
 
 	} else {

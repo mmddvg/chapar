@@ -6,7 +6,7 @@ type ErrUnexpected struct {
 	message string
 }
 
-func NewErrUnexpected(err error) ErrUnexpected {
+func NewUnexpected(err error) ErrUnexpected {
 	return ErrUnexpected{
 		message: err.Error(),
 	}

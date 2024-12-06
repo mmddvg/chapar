@@ -7,7 +7,7 @@ type ErrNotFound struct {
 	id     string
 }
 
-func NewErrNotFound(entityName string, id string) ErrNotFound {
+func NewNotFound(entityName string, id string) ErrNotFound {
 	return ErrNotFound{entity: entityName, id: id}
 }
 

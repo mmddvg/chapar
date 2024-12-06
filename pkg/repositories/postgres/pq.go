@@ -7,15 +7,18 @@ import (
 	"log"
 	"mmddvg/chapar/pkg/errs"
 	"mmddvg/chapar/pkg/models"
+	"mmddvg/chapar/pkg/requests"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 func isDuplicateError(err error) bool {
 
-	return err != nil && (err.Error() == "pq: duplicate key value violates unique constraint")
+	return err != nil && (strings.Contains(err.Error(), "duplicate key value violates unique constraint"))
 }
 
 type PostgresRepo struct {
@@ -38,38 +41,50 @@ func NewPostgresRepo() *PostgresRepo {
 	return &PostgresRepo{db: conn}
 }
 
-func (r *PostgresRepo) SignUp(newUser models.NewUser) (models.User, error) {
+func (r *PostgresRepo) SignUp(newUser requests.User) (models.User, error) {
 	query := `INSERT INTO users (username, name, password) VALUES ($1, $2, $3) RETURNING id, username, name`
 	var user models.User
 	err := r.db.Get(&user, query, newUser.UserName, newUser.Name, newUser.Password)
 	if err != nil {
 		if isDuplicateError(err) {
-			return models.User{}, errs.NewErrDuplicate("users", "")
+			return models.User{}, errs.NewDuplicate("users", "")
 		}
-		return models.User{}, errs.NewErrUnexpected(err)
+		return models.User{}, errs.NewUnexpected(err)
 	}
 	return user, nil
 }
 
 func (r *PostgresRepo) Get(userID uint64) (models.User, error) {
-	query := `SELECT id, username, name FROM users WHERE id = $1`
+	query := `SELECT * FROM users WHERE id = $1`
 	var user models.User
 	err := r.db.Get(&user, query, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return models.User{}, errs.NewErrNotFound("user", fmt.Sprint(userID))
+			return models.User{}, errs.NewNotFound("user", fmt.Sprint(userID))
 		}
-		return models.User{}, errs.NewErrUnexpected(err)
+		return models.User{}, errs.NewUnexpected(err)
 	}
 	return user, nil
 }
 
+func (r *PostgresRepo) GetByUsername(userName string) (models.User, error) {
+	query := `SELECT * FROM users WHERE username = $1`
+	var user models.User
+	err := r.db.Get(&user, query, userName)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.User{}, errs.NewNotFound("user", fmt.Sprint(userName))
+		}
+		return models.User{}, errs.NewUnexpected(err)
+	}
+	return user, nil
+}
 func (r *PostgresRepo) GetContacts(userID uint64) ([]uint64, error) {
 	query := `SELECT contact_id FROM contacts WHERE user_id = $1`
 	var contacts []uint64
 	err := r.db.Select(&contacts, query, userID)
 	if err != nil {
-		return nil, errs.NewErrUnexpected(err)
+		return nil, errs.NewUnexpected(err)
 	}
 	return contacts, nil
 }
@@ -79,7 +94,7 @@ func (r *PostgresRepo) IsContact(userID, contactID uint64) (bool, error) {
 	var exists bool
 	err := r.db.Get(&exists, query, userID, contactID)
 	if err != nil {
-		return false, errs.NewErrUnexpected(err)
+		return false, errs.NewUnexpected(err)
 	}
 	return exists, nil
 }
@@ -89,9 +104,9 @@ func (r *PostgresRepo) AddContact(userID, contactID uint64) ([]uint64, error) {
 	_, err := r.db.Exec(query, userID, contactID)
 	if err != nil {
 		if isDuplicateError(err) {
-			return nil, errs.NewErrDuplicate("contact", "")
+			return nil, errs.NewDuplicate("contact", "")
 		}
-		return nil, errs.NewErrUnexpected(err)
+		return nil, errs.NewUnexpected(err)
 	}
 	return r.GetContacts(userID)
 }
@@ -100,7 +115,7 @@ func (r *PostgresRepo) RemoveContact(userID, contactID uint64) ([]uint64, error)
 	query := `DELETE FROM contacts WHERE user_id = $1 AND contact_id = $2`
 	_, err := r.db.Exec(query, userID, contactID)
 	if err != nil {
-		return nil, errs.NewErrUnexpected(err)
+		return nil, errs.NewUnexpected(err)
 	}
 	return r.GetContacts(userID)
 }
@@ -111,9 +126,9 @@ func (r *PostgresRepo) AddGroupMember(groupId uint64, memberId uint64) (models.G
 	err := r.db.Get(&res, query, groupId, memberId)
 	if err != nil {
 		if isDuplicateError(err) {
-			return res, errs.NewErrDuplicate("member", "id")
+			return res, errs.NewDuplicate("member", "id")
 		}
-		return res, errs.NewErrUnexpected(err)
+		return res, errs.NewUnexpected(err)
 	}
 	return res, err
 }
@@ -124,9 +139,9 @@ func (r *PostgresRepo) RemoveGroupMember(groupId uint64, memberId uint64) (model
 	err := r.db.Get(&res, query, time.Now(), groupId, memberId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return res, errs.NewErrNotFound("member", fmt.Sprint(memberId))
+			return res, errs.NewNotFound("member", fmt.Sprint(memberId))
 		}
-		return res, errs.NewErrUnexpected(err)
+		return res, errs.NewUnexpected(err)
 	}
 	return res, err
 }
@@ -140,9 +155,9 @@ func (r *PostgresRepo) CreatePv(userID, targetID uint64) (models.PrivateChat, er
 	err := r.db.Get(&chat, query, userID, targetID)
 	if err != nil {
 		if isDuplicateError(err) {
-			return models.PrivateChat{}, errs.NewErrDuplicate("pv", "")
+			return models.PrivateChat{}, errs.NewDuplicate("pv", "")
 		}
-		return models.PrivateChat{}, errs.NewErrUnexpected(err)
+		return models.PrivateChat{}, errs.NewUnexpected(err)
 	}
 	return chat, nil
 }
@@ -153,9 +168,9 @@ func (r *PostgresRepo) GetPv(targetID uint64) (models.PrivateChat, error) {
 	err := r.db.Get(&chat, query, targetID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return models.PrivateChat{}, errs.NewErrNotFound("pv", fmt.Sprint(targetID))
+			return models.PrivateChat{}, errs.NewNotFound("pv", fmt.Sprint(targetID))
 		}
-		return models.PrivateChat{}, errs.NewErrUnexpected(err)
+		return models.PrivateChat{}, errs.NewUnexpected(err)
 	}
 	return chat, nil
 }
@@ -165,7 +180,7 @@ func (r *PostgresRepo) WritePv(newMessage models.NewPvMessage) (models.PvMessage
 	var message models.PvMessage
 	err := r.db.Get(&message, query, generateId(), newMessage.PvId, newMessage.SenderId, newMessage.Message, time.Now())
 	if err != nil {
-		return models.PvMessage{}, errs.NewErrUnexpected(err)
+		return models.PvMessage{}, errs.NewUnexpected(err)
 	}
 	return message, nil
 }
@@ -178,7 +193,7 @@ func (r *PostgresRepo) WriteGroup(newMessage models.NewGroupMessage) (models.Gro
 	var message models.GroupMessage
 	err := r.db.Get(&message, query, generateId(), newMessage.GroupId, newMessage.Message, newMessage.SenderId, time.Now())
 	if err != nil {
-		return message, errs.NewErrUnexpected(err)
+		return message, errs.NewUnexpected(err)
 	}
 	return message, nil
 }
@@ -188,7 +203,7 @@ func (r *PostgresRepo) EditPv(edit models.EditPvMessage) (models.PvMessage, erro
 	var message models.PvMessage
 	err := r.db.Get(&message, query, edit.NewMessage, edit.Id)
 	if err != nil {
-		return models.PvMessage{}, errs.NewErrUnexpected(err)
+		return models.PvMessage{}, errs.NewUnexpected(err)
 	}
 	return message, nil
 }
@@ -198,7 +213,7 @@ func (r *PostgresRepo) EditGroup(edit models.EditGroupMessage) (models.GroupMess
 	var message models.GroupMessage
 	err := r.db.Get(&message, query, edit.NewMessage, edit.Id, edit.GroupId)
 	if err != nil {
-		return models.GroupMessage{}, errs.NewErrUnexpected(err)
+		return models.GroupMessage{}, errs.NewUnexpected(err)
 	}
 	return message, nil
 }
@@ -208,12 +223,12 @@ func (r *PostgresRepo) AddProfile(userId uint64, link string) ([]string, error) 
 	query := "INSERT INTO user_profiles VALUES($1,$2,$3);"
 	_, err := r.db.Exec(query, userId, link, time.Now())
 	if err != nil {
-		return res, errs.NewErrUnexpected(err)
+		return res, errs.NewUnexpected(err)
 	}
 
 	err = r.db.Get(&res, "SELECT link FROM user_profiles WHERE user_id = $1;", userId)
 	if err != nil {
-		return res, errs.NewErrUnexpected(err)
+		return res, errs.NewUnexpected(err)
 	}
 	return res, nil
 }
@@ -232,12 +247,12 @@ func (r *PostgresRepo) RemoveProfile(userId uint64, count uint) ([]string, error
 `
 	_, err := r.db.Exec(query, userId, count)
 	if err != nil {
-		return res, errs.NewErrUnexpected(err)
+		return res, errs.NewUnexpected(err)
 	}
 
 	err = r.db.Get(&res, "SELECT link FROM user_profiles WHERE user_id = $1 ORDER BY created_at;")
 	if err != nil {
-		return res, errs.NewErrUnexpected(err)
+		return res, errs.NewUnexpected(err)
 	}
 
 	return res, nil
@@ -249,9 +264,9 @@ func (r *PostgresRepo) Block(userID, targetID uint64) (uint64, error) {
 	err := r.db.Get(&targetID, query, userID, targetID)
 	if err != nil {
 		if isDuplicateError(err) {
-			return 0, errs.NewErrDuplicate("blocked", fmt.Sprint(targetID))
+			return 0, errs.NewDuplicate("blocked", fmt.Sprint(targetID))
 		}
-		return 0, errs.NewErrUnexpected(err)
+		return 0, errs.NewUnexpected(err)
 	}
 	return targetID, nil
 }
@@ -260,7 +275,7 @@ func (r *PostgresRepo) UnBlock(userID, targetID uint64) (uint64, error) {
 	query := `DELETE FROM blocked WHERE user_id = $1 AND target_id = $2;`
 	_, err := r.db.Exec(query, userID, targetID)
 	if err != nil {
-		return 0, errs.NewErrUnexpected(err)
+		return 0, errs.NewUnexpected(err)
 	}
 	return targetID, nil
 }
@@ -272,9 +287,9 @@ func (r *PostgresRepo) CreateGroup(userId uint64, title string, link string) (mo
 	err := r.db.Get(&res, query, title, link, userId)
 	if err != nil {
 		if isDuplicateError(err) {
-			return res, errs.NewErrDuplicate("group", "link")
+			return res, errs.NewDuplicate("group", "link")
 		}
-		return res, errs.NewErrUnexpected(err)
+		return res, errs.NewUnexpected(err)
 	}
 	return res, nil
 }
