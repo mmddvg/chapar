@@ -13,9 +13,9 @@ type UserDB interface {
 	UnBlock(userId uint64, targetId uint64) (uint64, error)
 	AddProfile(uint64, string) ([]string, error)
 	RemoveProfile(userId uint64, count uint) ([]string, error)
-	CreateGroup(uint64, title string, link string) (Group, error)
-	AddGroupMember(userId uint64, memberId uint64) (GroupMember, error)
-	RemoveGroupMember(userId uint64, memberId uint64) (GroupMember, error)
+	CreateGroup(ownerId uint64, title string, link string) (Group, error)
+	AddGroupMember(groupId uint64, memberId uint64) (GroupMember, error)
+	RemoveGroupMember(groupId uint64, memberId uint64) (GroupMember, error)
 }
 
 type MessageDB interface {
