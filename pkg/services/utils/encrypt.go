@@ -6,11 +6,12 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"mmddvg/chapar/pkg/errs"
 	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func Encrypt(username, password string) (string, error) {
@@ -79,9 +80,9 @@ func CheckPassword(encryptedUsername, password, originalUsername string) (bool, 
 
 func GenerateJWT(id uint64) (string, error) {
 	claims := jwt.MapClaims{
-		"sub": id,
-		"exp": time.Now().Add(time.Hour).Unix(),
-		"iat": time.Now().Unix(),
+		"sub": fmt.Sprint(id),
+		"exp": jwt.NewNumericDate(time.Now().Add(time.Hour * 3)),
+		"iat": jwt.NewNumericDate(time.Now()),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
