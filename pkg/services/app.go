@@ -1,6 +1,8 @@
 package services
 
-import "mmddvg/chapar/pkg/models"
+import (
+	"mmddvg/chapar/pkg/ports"
+)
 
 type Application struct {
 	// hub
@@ -11,19 +13,22 @@ type Application struct {
 
 	// rest
 
-	userDB    models.UserDB
-	messageDB models.MessageDB
+	userDB    ports.UserDB
+	messageDB ports.MessageDB
+
+	profileStorage ports.PictureStorage
 }
 
-func NewApp(userDB models.UserDB, messageDB models.MessageDB) *Application {
+func NewApp(userDB ports.UserDB, messageDB ports.MessageDB, profileStorage ports.PictureStorage) *Application {
 	app := &Application{
 		users:      make(map[uint64]*Client, 1000),
 		channel:    make(chan Message, 1000),
 		RegChan:    make(chan Register),
 		UnregChann: make(chan UnRegister),
 
-		userDB:    userDB,
-		messageDB: messageDB,
+		userDB:         userDB,
+		messageDB:      messageDB,
+		profileStorage: profileStorage,
 	}
 
 	app.Run()

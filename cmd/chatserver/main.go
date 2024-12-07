@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	HttpWs "mmddvg/chapar/pkg/http"
+	"mmddvg/chapar/pkg/repositories/localfs"
 	"mmddvg/chapar/pkg/repositories/postgres"
 	"mmddvg/chapar/pkg/services"
 
@@ -15,8 +16,10 @@ func main() {
 		log.Println(err)
 	}
 
+	profileStore := localfs.NewLocalPictureStorage("./static")
+
 	db := postgres.NewPostgresRepo()
-	app := services.NewApp(db, db)
+	app := services.NewApp(db, db, profileStore)
 
 	HttpWs.Initiate(app)
 }

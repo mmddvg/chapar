@@ -1,6 +1,7 @@
 package http
 
 import (
+	"mime/multipart"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -23,4 +24,20 @@ func GetBody[T any](c echo.Context) (T, error) {
 	}
 
 	return req, nil
+}
+
+func GetFile(c echo.Context) (multipart.File, string, error) {
+	var src multipart.File
+	file, err := c.FormFile("file")
+	if err != nil {
+		return src, "", c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid file"})
+	}
+	contentType := file.Header.Get("Content-Type")
+	src, err = file.Open()
+	if err != nil {
+		return src, "", c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to open file"})
+	}
+	// defer src.Close()
+
+	return src, contentType, nil
 }

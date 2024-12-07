@@ -35,5 +35,14 @@ func Initiate(app *services.Application) {
 	r.GET("/hello", h.Hello)
 	r.GET("/message", h.chat)
 
+	g := r.Group("/group")
+
+	g.POST("", h.CreateGroup)
+	g.PATCH("", h.UpdateGroup)
+	g.PUT("/member", h.AddGroupMember)
+	g.DELETE("/member", h.RmGroupMember)
+	g.PUT("/profile/:group_id", h.AddGroupProfile)
+	g.DELETE("/profile", h.RmGroupProfile)
+
 	e.Logger.Fatal(e.Start(":8080"))
 }

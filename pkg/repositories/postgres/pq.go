@@ -293,3 +293,53 @@ func (r *PostgresRepo) CreateGroup(userId uint64, title string, link string) (mo
 	}
 	return res, nil
 }
+
+func (r *PostgresRepo) GetGroup(groupId uint64) (models.Group, error) {
+	var group models.Group
+	query := `SELECT * FROM groups WHERE id = $1`
+	err := r.db.Get(&group, query, groupId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.Group{}, errs.NewNotFound("group", fmt.Sprint(groupId))
+		}
+		return models.Group{}, errs.NewUnexpected(err)
+	}
+	return group, nil
+}
+
+func (r *PostgresRepo) UpdateGroup(body requests.UpdateGroup) (models.Group, error) {
+	var group models.Group
+	query := `UPDATE groups SET title = $1 WHERE id = $3 RETURNING *`
+	err := r.db.Get(&group, query, body.Name, body.GroupId)
+	if err != nil {
+		return models.Group{}, errs.NewUnexpected(err)
+	}
+	return group, nil
+}
+
+func (r *PostgresRepo) AddGroupProfile(groupId uint64, link string) (models.GroupProfile, error) {
+	var profile models.GroupProfile
+	query := `INSERT INTO group_profiles (g_id, link) VALUES ($1, $2) RETURNING *`
+	err := r.db.Get(&profile, query, groupId, link)
+	if err != nil {
+		return models.GroupProfile{}, errs.NewUnexpected(err)
+	}
+	return profile, nil
+}
+
+func (r *PostgresRepo) RmGroupProfile(body requests.RmGroupProfile) (string, error) {
+	var link string
+	query := `DELETE FROM group_profiles
+	WHERE (g_id, created_at) IN (
+    SELECT g_id, created_at
+    FROM group_profiles
+    WHERE g_id = $1
+    ORDER BY created_at
+    OFFSET $2
+) RETURNING link;`
+	err := r.db.Get(&link, query, body.GroupId, body.NthCount)
+	if err != nil {
+		return "", errs.NewUnexpected(err)
+	}
+	return link, nil
+}
