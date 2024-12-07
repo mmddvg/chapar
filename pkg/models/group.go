@@ -16,8 +16,7 @@ type GroupProfile struct {
 }
 
 type GroupMember struct {
-	GroupId   uint64    `db:"group_id" json:"group_id"`
-	MemberId  uint64    `db:"member_id" json:"member_id"`
-	JoinedAt  time.Time `db:"joined_at" json:"joined_at"`
-	DeletedAt time.Time `db:"deleted_at" json:"deleted_at,omitempty"`
+	GroupId  uint64    `db:"group_id" json:"group_id"`
+	MemberId uint64    `db:"member_id" json:"member_id"`
+	JoinedAt time.Time `db:"joined_at" json:"joined_at"`
 }

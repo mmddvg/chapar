@@ -35,6 +35,9 @@ func Initiate(app *services.Application) {
 	r.GET("/hello", h.Hello)
 	r.GET("/message", h.chat)
 
+	r.POST("/contact/:contact_username", h.AddContact)
+	r.DELETE("/contact/:contact_username", h.RemoveContact)
+
 	g := r.Group("/group")
 
 	g.POST("", h.CreateGroup)

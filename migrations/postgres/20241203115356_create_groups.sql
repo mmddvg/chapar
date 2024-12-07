@@ -19,7 +19,6 @@ CREATE TABLE group_members(
     group_id INT REFERENCES groups(id),
     member_id INT REFERENCES users(id),
     joined_at TIMESTAMP DEFAULT now(),
-    deleted_at TIMESTAMP,
     PRIMARY KEY(group_id,member_id)
 );
 

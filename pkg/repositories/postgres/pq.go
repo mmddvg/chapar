@@ -135,8 +135,8 @@ func (r *PostgresRepo) AddGroupMember(groupId uint64, memberId uint64) (models.G
 
 func (r *PostgresRepo) RemoveGroupMember(groupId uint64, memberId uint64) (models.GroupMember, error) {
 	var res models.GroupMember
-	query := `UPDATE group_members SET deleted_at = $1 WHERE group_id = $2 AND member_id = $3 RETURNING *;`
-	err := r.db.Get(&res, query, time.Now(), groupId, memberId)
+	query := `DELETE FROM group_members WHERE group_id = $1 AND member_id = $2 RETURNING *;`
+	err := r.db.Get(&res, query, groupId, memberId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return res, errs.NewNotFound("member", fmt.Sprint(memberId))
