@@ -162,15 +162,26 @@ func (r *PostgresRepo) CreatePv(userID, targetID uint64) (models.PrivateChat, er
 	return chat, nil
 }
 
-func (r *PostgresRepo) GetPv(targetID uint64) (models.PrivateChat, error) {
-	query := `SELECT id, user1, user2, created_at FROM private_chats WHERE id = $1`
+// TODO : ppostgres hashmap index ?
+func (r *PostgresRepo) GetPvOrCreate(user1Id, user2Id uint64) (models.PrivateChat, error) {
+	query := `SELECT * FROM private_chats WHERE 
+                (user1 = $1 AND user2 = $2) OR 
+                (user1 = $2 AND user2 = $1);`
+
 	var chat models.PrivateChat
-	err := r.db.Get(&chat, query, targetID)
+	err := r.db.Get(&chat, query, user1Id, user2Id)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return models.PrivateChat{}, errs.NewNotFound("pv", fmt.Sprint(targetID))
+		if err == sql.ErrNoRows {
+			insertQuery := `INSERT INTO private_chats (user1, user2) 
+                            VALUES ($1, $2) 
+                            RETURNING *;`
+			err = r.db.Get(&chat, insertQuery, user1Id, user2Id)
+			if err != nil {
+				return chat, errs.NewUnexpected(err)
+			}
+		} else {
+			return chat, errs.NewUnexpected(err)
 		}
-		return models.PrivateChat{}, errs.NewUnexpected(err)
 	}
 	return chat, nil
 }
@@ -342,4 +353,54 @@ func (r *PostgresRepo) RmGroupProfile(body requests.RmGroupProfile) (string, err
 		return "", errs.NewUnexpected(err)
 	}
 	return link, nil
+}
+
+func (r *PostgresRepo) GetGroupMembers(groupId uint64) ([]uint64, error) {
+	var res []uint64
+	query := "SELECT member_id FROM group_members WHERE group_id = $1;"
+	err := r.db.Get(&res, query, groupId)
+	if err != nil {
+		return res, errs.NewUnexpected(err)
+	}
+	return res, err
+}
+
+func (r *PostgresRepo) IsMember(groupId, userId uint64) (bool, error) {
+	var res uint64
+	query := "SELECT member_id FROM group_members WHERE group_id = $1 AND member_id = $2;"
+
+	err := r.db.Get(&res, query, groupId, userId)
+	if err != nil {
+		return false, errs.NewUnexpected(err)
+	}
+
+	return res == userId, nil
+}
+
+func (r *PostgresRepo) IsBlocked(userId uint64, targetId uint64) (bool, error) {
+	var tmp uint64
+	query := "SELECT user_id FROM blocked WHERE user_id = $1 AND target_id = $2;"
+
+	err := r.db.Get(&tmp, query, userId, targetId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, errs.NewUnexpected(err)
+	}
+
+	return tmp == userId, nil
+}
+
+func (r *PostgresRepo) SeenAck(messageId uint64) (models.PvMessage, error) {
+	var res models.PvMessage
+	query := "UPDATE pv_messages SET seen_at = NOW() WHERE id = $1 RETURNING *;"
+	err := r.db.Get(&res, query, messageId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return res, errs.NewNotFound("message", string(messageId))
+		}
+		return res, errs.NewUnexpected(err)
+	}
+	return res, nil
 }

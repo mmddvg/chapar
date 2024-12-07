@@ -2,6 +2,21 @@ package models
 
 import "time"
 
+type ActionType uint8
+
+const (
+	NewMessage  ActionType = iota
+	EditMessage ActionType = iota
+	SeenAck     ActionType = iota
+)
+
+type TargetType uint8
+
+const (
+	PvTarget    TargetType = iota
+	GroupTarget TargetType = iota
+)
+
 type PvMessage struct {
 	Id        uint64    `db:"id"`
 	PvId      uint64    `db:"pv_id"`

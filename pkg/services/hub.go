@@ -1,5 +1,9 @@
 package services
 
+import (
+	"mmddvg/chapar/pkg/models"
+)
+
 func (h *Application) Run() {
 	go func() {
 		for {
@@ -16,9 +20,9 @@ func (h *Application) Run() {
 }
 func (h *Application) handleMessage(message Message) {
 	switch message.Target() {
-	case Group:
+	case models.GroupTarget:
 		h.handleGroupMessage(message)
-	case Pv:
+	case models.PvTarget:
 		h.handleSingleMessage(message)
 	}
 }
@@ -31,10 +35,14 @@ func (h *Application) handleSingleMessage(message Message) {
 	}
 }
 
+// todo : handle in separate goroutine ?
 func (h *Application) handleGroupMessage(message Message) {
-	// todo
 
-	ids := []uint64{}
+	ids, err := h.userDB.GetGroupMembers(message.RecieverId())
+	if err != nil {
+		_ = err.Error()
+		return
+	}
 
 	for _, id := range ids {
 		if v, ok := h.users[id]; ok {
@@ -62,10 +70,6 @@ func (h *Application) unregister(arg UnRegister) {
 	if len(v.devices) == 0 {
 		delete(h.users, arg.Id)
 	}
-}
-
-func (h *Application) SendMessage(m Message) {
-	h.channel <- m
 }
 
 // when a user wants to write a message , the message is sent to `Channel` channel to be broadcasted

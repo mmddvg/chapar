@@ -2,7 +2,11 @@ package http
 
 import (
 	"log/slog"
+	"mmddvg/chapar/pkg/errs"
+	"mmddvg/chapar/pkg/requests"
+	"mmddvg/chapar/pkg/responses"
 	"mmddvg/chapar/pkg/services"
+	"mmddvg/chapar/pkg/services/utils"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -20,13 +24,19 @@ func (h *httpWs) chat(c echo.Context) error {
 		return err
 	}
 	defer ws.Close()
-	id, _ := strconv.ParseUint(c.QueryParam("id"), 10, 0)
+	id, err := wsAuth(ws)
+	if err != nil {
+		ws.WriteJSON(responses.Error{Message: err.Error()})
+		ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "Invalid message format"))
+		return nil
+	}
 
 	uid, err := uuid.NewV7()
-
 	if err != nil {
-		slog.Error("error creating connection uid : ", err)
+		slog.Error("error creating connection uid: ", err)
+		return err
 	}
+
 	ch := make(chan services.Message)
 	h.App.RegChan <- services.Register{
 		Id:    id,
@@ -36,40 +46,50 @@ func (h *httpWs) chat(c echo.Context) error {
 
 	go func() {
 		for {
-			var inp WsMessage
+			var inp requests.Message
 			err := ws.ReadJSON(&inp)
 			if err != nil {
-				slog.Error(err.Error())
-				continue
+				slog.Error("read error: ", err)
+				break
 			}
-			h.App.SendMessage(inp)
+			h.App.SendMessage(id, inp)
 		}
 	}()
 
 	for m := range ch {
 		err := ws.WriteJSON(m)
 		if err != nil {
-			slog.Error(err.Error())
+			slog.Error("write error: ", err)
+			break
 		}
-
 	}
 
-	return c.String(200, "")
+	h.App.UnregChann <- services.UnRegister{Id: id, UId: uid}
+	return nil
 }
 
-type WsMessage struct {
-	Id      uint64 `json:"id"`
-	Message string `json:"message"`
-}
+func wsAuth(ws *websocket.Conn) (uint64, error) {
+	var err error
+	var tokenMessage struct {
+		Token string `json:"token"`
+	}
 
-func (m WsMessage) Action() services.ActionType {
-	return services.NewMessage
-}
+	err = ws.ReadJSON(&tokenMessage)
+	if err != nil {
+		slog.Error("failed to read token message: ", err)
+		return 0, errs.NewBadRequest("network error")
+	}
 
-func (m WsMessage) Target() services.TargetType {
-	return services.Pv
-}
+	claims, err := utils.ValidateJWT(tokenMessage.Token)
+	if err != nil {
+		return 0, errs.NewBadRequest("invalid jwt")
+	}
 
-func (m WsMessage) RecieverId() uint64 {
-	return m.Id
+	// TODO
+	// unreachable errors , but better be handled
+	idStr, _ := claims.GetSubject()
+
+	id, _ := strconv.ParseUint(idStr, 10, 0)
+
+	return id, nil
 }
