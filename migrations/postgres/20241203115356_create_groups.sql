@@ -22,10 +22,30 @@ CREATE TABLE group_members(
     PRIMARY KEY(group_id,member_id)
 );
 
+CREATE OR REPLACE FUNCTION add_owner_to_group_members()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO group_members (group_id, member_id, created_at)
+    VALUES (NEW.id, NEW.owner_id, NOW());
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER after_group_insert
+AFTER INSERT ON groups
+FOR EACH ROW
+EXECUTE FUNCTION add_owner_to_group_members();
+
+
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+
+DROP TRIGGER IF EXISTS after_group_insert ON groups;
+
+DROP FUNCTION IF EXISTS add_owner_to_group_members();
 
 DROP TABLE group_members;
 
