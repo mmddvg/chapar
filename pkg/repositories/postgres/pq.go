@@ -398,7 +398,7 @@ func (r *PostgresRepo) SeenAck(messageId uint64) (models.PvMessage, error) {
 	err := r.db.Get(&res, query, messageId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return res, errs.NewNotFound("message", string(messageId))
+			return res, errs.NewNotFound("message", fmt.Sprint(messageId))
 		}
 		return res, errs.NewUnexpected(err)
 	}
