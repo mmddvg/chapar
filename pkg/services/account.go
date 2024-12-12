@@ -75,3 +75,12 @@ func (app *Application) RemoveContact(userId uint64, contactUsername string) ([]
 
 	return app.userDB.RemoveContact(userId, user.Id)
 }
+
+func (app *Application) GetUser(userId uint64) (responses.Login, error) {
+	user, err := app.userDB.Get(userId)
+	if err != nil {
+		return responses.Login{}, err
+	}
+
+	return responses.NewLogin(user, ""), nil
+}

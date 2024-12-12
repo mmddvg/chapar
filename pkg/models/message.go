@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type ActionType uint8
 
@@ -18,12 +21,12 @@ const (
 )
 
 type PvMessage struct {
-	Id        uint64    `db:"id"`
-	PvId      uint64    `db:"pv_id"`
-	SenderId  uint64    `db:"sender_id"`
-	Message   string    `db:"message"`
-	SeenAt    time.Time `db:"seen_at"`
-	CreatedAt time.Time `db:"created_at"`
+	Id        uint64       `db:"id" json:"id"`
+	PvId      uint64       `db:"pv_id" json:"pv_id"`
+	SenderId  uint64       `db:"sender_id" json:"sender_id"`
+	Message   string       `db:"message" json:"message"`
+	SeenAt    sql.NullTime `db:"seen_at" json:"seen_at"`
+	CreatedAt time.Time    `db:"created_at" json:"created_at"`
 }
 
 type NewPvMessage struct {
@@ -33,11 +36,11 @@ type NewPvMessage struct {
 }
 
 type GroupMessage struct {
-	Id        uint64 `db:"id"`
-	GroupId   uint64 `db:"group_id"`
-	Message   string `db:"message"`
-	SenderId  uint64 `db:"sender_id"`
-	CreatedAt uint64 `db:"created_at"`
+	Id        uint64 `db:"id" json:"id"`
+	GroupId   uint64 `db:"group_id" json:"group_id"`
+	Message   string `db:"message" json:"message"`
+	SenderId  uint64 `db:"sender_id" json:"sender_id"`
+	CreatedAt uint64 `db:"created_at" json:"created_at"`
 }
 
 type NewGroupMessage struct {

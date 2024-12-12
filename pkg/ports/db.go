@@ -29,6 +29,8 @@ type UserDB interface {
 	RmGroupProfile(requests.RmGroupProfile) (string, error)
 	AddGroupMember(groupId uint64, memberId uint64) (models.GroupMember, error)
 	RemoveGroupMember(groupId uint64, memberId uint64) (models.GroupMember, error)
+
+	GetChats(uint64) ([]models.User, []models.Group, error)
 }
 
 type MessageDB interface {
@@ -37,4 +39,7 @@ type MessageDB interface {
 	EditPv(models.EditPvMessage) (models.PvMessage, error)
 	EditGroup(models.EditGroupMessage) (models.GroupMessage, error)
 	SeenAck(uint64) (models.PvMessage, error)
+
+	GetPvMessages(uint64) ([]models.PvMessage, error)
+	GetGroupMessages(uint64) ([]models.GroupMessage, error)
 }

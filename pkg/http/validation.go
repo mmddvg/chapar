@@ -8,13 +8,14 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+var validate = validator.New()
+
 func GetBody[T any](c echo.Context) (T, error) {
 	var req T
 	if err := c.Bind(&req); err != nil {
 		return req, echo.NewHTTPError(http.StatusBadRequest, "invalid request body").SetInternal(err)
 	}
 
-	validate := validator.New()
 	if err := validate.Struct(req); err != nil {
 		validationErrors := make(map[string]string)
 		for _, e := range err.(validator.ValidationErrors) {

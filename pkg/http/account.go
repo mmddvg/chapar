@@ -54,3 +54,12 @@ func (h *httpWs) RemoveContact(c echo.Context) error {
 
 	return c.JSON(200, res)
 }
+
+func (h *httpWs) GetUser(c echo.Context) error {
+	user, err := h.App.GetUser(utils.GetUserId(c))
+	if err != nil {
+		return ErrHandler(c, err)
+	}
+
+	return c.JSON(200, user)
+}

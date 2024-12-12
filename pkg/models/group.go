@@ -4,7 +4,7 @@ import "time"
 
 type Group struct {
 	Id      uint64 `db:"id" json:"id"`
-	Title   string `db:"title" json:"title"`
+	Title   string `db:"title" json:"name"`
 	Link    string `db:"link" json:"link"`
 	OwnerId uint64 `db:"owner_id" json:"owner_id"`
 }

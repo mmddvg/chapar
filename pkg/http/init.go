@@ -26,14 +26,19 @@ func Initiate(app *services.Application) {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 
 	e.POST("/signup", h.SignUp)
 	e.POST("/login", h.Login)
+	e.GET("/message", h.chat)
 
 	r := e.Group("/restricted", echojwt.WithConfig(config))
 
 	r.GET("/hello", h.Hello)
-	r.GET("/message", h.chat)
+	r.GET("/me", h.GetUser)
+	r.GET("/chats", h.GetChats)
+	r.GET("/pv/:id/messages", h.GetPvMessages)
+	r.GET("/group/:id/messages", h.GetGroupMessages)
 
 	r.POST("/contact/:contact_username", h.AddContact)
 	r.DELETE("/contact/:contact_username", h.RemoveContact)

@@ -7,7 +7,7 @@ type Message struct {
 	ActionType  uint8  `json:"action_type" validate:"required,oneof= 0 1 2"`
 	TargetType  uint8  `json:"target_type" validate:"required,oneof= 0 1"`
 	Message     string `json:"message" validate:"required_if=ActionType 0 1"`
-	MessageId   uint64 `json:"message_id" validate:"required_if=ActionType 2"`
+	MessageId   uint64 `json:"message_id" validate:"required_if=ActionType 1 2"`
 }
 
 func (m Message) RecieverId() uint64 {

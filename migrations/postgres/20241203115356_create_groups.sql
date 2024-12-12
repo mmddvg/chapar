@@ -25,7 +25,7 @@ CREATE TABLE group_members(
 CREATE OR REPLACE FUNCTION add_owner_to_group_members()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO group_members (group_id, member_id, created_at)
+    INSERT INTO group_members (group_id, member_id, joined_at)
     VALUES (NEW.id, NEW.owner_id, NOW());
     
     RETURN NEW;

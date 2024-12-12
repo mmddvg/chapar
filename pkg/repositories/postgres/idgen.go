@@ -19,6 +19,6 @@ func Initialize(nodeID int64) {
 	}
 }
 
-func generateId() uint64 {
+func GenerateId() uint64 {
 	return uint64(node.Generate().Int64())
 }

@@ -7,6 +7,7 @@ import (
 	"mmddvg/chapar/pkg/responses"
 	"mmddvg/chapar/pkg/services"
 	"mmddvg/chapar/pkg/services/utils"
+	"net/http"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -15,7 +16,9 @@ import (
 )
 
 var (
-	upgrader = websocket.Upgrader{}
+	upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
 )
 
 func (h *httpWs) chat(c echo.Context) error {

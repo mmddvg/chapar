@@ -27,6 +27,7 @@ type PostgresRepo struct {
 
 func NewPostgresRepo() *PostgresRepo {
 	var str string
+	Initialize(1) // TODO
 
 	if os.Getenv("POSTGRES_URI") != "" {
 		str = os.Getenv("POSTGRES_URI")
@@ -189,7 +190,7 @@ func (r *PostgresRepo) GetPvOrCreate(user1Id, user2Id uint64) (models.PrivateCha
 func (r *PostgresRepo) WritePv(newMessage models.NewPvMessage) (models.PvMessage, error) {
 	query := `INSERT INTO pv_messages VALUES ($1, $2, $3, $4, $5) RETURNING *;`
 	var message models.PvMessage
-	err := r.db.Get(&message, query, generateId(), newMessage.PvId, newMessage.SenderId, newMessage.Message, time.Now())
+	err := r.db.Get(&message, query, GenerateId(), newMessage.PvId, newMessage.SenderId, newMessage.Message, time.Now())
 	if err != nil {
 		return models.PvMessage{}, errs.NewUnexpected(err)
 	}
@@ -202,7 +203,7 @@ func (r *PostgresRepo) WriteGroup(newMessage models.NewGroupMessage) (models.Gro
 		VALUES ($1, $2, $3, $4, $5) 
 		RETURNING id, group_id, message, sender_id, created_at`
 	var message models.GroupMessage
-	err := r.db.Get(&message, query, generateId(), newMessage.GroupId, newMessage.Message, newMessage.SenderId, time.Now())
+	err := r.db.Get(&message, query, GenerateId(), newMessage.GroupId, newMessage.Message, newMessage.SenderId, time.Now())
 	if err != nil {
 		return message, errs.NewUnexpected(err)
 	}
@@ -403,4 +404,39 @@ func (r *PostgresRepo) SeenAck(messageId uint64) (models.PvMessage, error) {
 		return res, errs.NewUnexpected(err)
 	}
 	return res, nil
+}
+
+func (r *PostgresRepo) GetChats(userId uint64) ([]models.User, []models.Group, error) {
+	users := []models.User{}
+	groups := []models.Group{}
+	err := r.db.Select(&users, "SELECT * FROM users WHERE id IN (SELECT user1 FROM private_chats WHERE user2 = $1 UNION ALL SELECT user2 FROM private_chats WHERE user1 = $1);", userId)
+	if err != nil {
+		return users, groups, errs.NewUnexpected(err)
+	}
+
+	err = r.db.Select(&groups, "SELECT * FROM groups WHERE id IN (SELECT group_id from group_members where member_id = $1);", userId)
+	if err != nil {
+		return users, groups, errs.NewUnexpected(err)
+	}
+
+	return users, groups, nil
+}
+
+func (r *PostgresRepo) GetPvMessages(id uint64) ([]models.PvMessage, error) {
+	res := []models.PvMessage{}
+	err := r.db.Select(&res, "SELECT * FROM pv_messages WHERE pv_id = $1;", id)
+	if err != nil {
+		return res, errs.NewUnexpected(err)
+	}
+
+	return res, err
+}
+func (r *PostgresRepo) GetGroupMessages(id uint64) ([]models.GroupMessage, error) {
+	res := []models.GroupMessage{}
+	err := r.db.Select(&res, "SELECT * FROM group_messages WHERE group_id = $1;", id)
+	if err != nil {
+		return res, errs.NewUnexpected(err)
+	}
+
+	return res, err
 }
