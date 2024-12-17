@@ -18,8 +18,8 @@ func (h *Application) Run() {
 		}
 	}()
 }
-func (h *Application) handleMessage(message Message) {
-	switch message.Target() {
+func (h *Application) handleMessage(message models.HubMessage) {
+	switch message.TargetType {
 	case models.GroupTarget:
 		h.handleGroupMessage(message)
 	case models.PvTarget:
@@ -27,8 +27,8 @@ func (h *Application) handleMessage(message Message) {
 	}
 }
 
-func (h *Application) handleSingleMessage(message Message) {
-	if v, ok := h.users[message.RecieverId()]; ok {
+func (h *Application) handleSingleMessage(message models.HubMessage) {
+	if v, ok := h.users[message.RecieverId]; ok {
 		for id := range v.devices {
 			v.devices[id] <- message // todo : make sure this doesn't get blocked
 		}
@@ -36,9 +36,9 @@ func (h *Application) handleSingleMessage(message Message) {
 }
 
 // todo : handle in separate goroutine ?
-func (h *Application) handleGroupMessage(message Message) {
+func (h *Application) handleGroupMessage(message models.HubMessage) {
 
-	ids, err := h.userDB.GetGroupMembers(message.RecieverId())
+	ids, err := h.userDB.GetGroupMembers(message.RecieverId)
 	if err != nil {
 		_ = err.Error()
 		return

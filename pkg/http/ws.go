@@ -3,6 +3,7 @@ package http
 import (
 	"log/slog"
 	"mmddvg/chapar/pkg/errs"
+	"mmddvg/chapar/pkg/models"
 	"mmddvg/chapar/pkg/requests"
 	"mmddvg/chapar/pkg/responses"
 	"mmddvg/chapar/pkg/services"
@@ -40,7 +41,7 @@ func (h *httpWs) chat(c echo.Context) error {
 		return err
 	}
 
-	ch := make(chan services.Message)
+	ch := make(chan models.HubMessage)
 	h.App.RegChan <- services.Register{
 		Id:    id,
 		UId:   uid,

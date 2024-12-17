@@ -1,13 +1,14 @@
 package services
 
 import (
+	"mmddvg/chapar/pkg/models"
 	"mmddvg/chapar/pkg/ports"
 )
 
 type Application struct {
 	// hub
 	users      map[uint64]*Client
-	channel    chan Message
+	channel    chan models.HubMessage
 	RegChan    chan Register
 	UnregChann chan UnRegister
 
@@ -22,7 +23,7 @@ type Application struct {
 func NewApp(userDB ports.UserDB, messageDB ports.MessageDB, profileStorage ports.PictureStorage) *Application {
 	app := &Application{
 		users:      make(map[uint64]*Client, 1000),
-		channel:    make(chan Message, 1000),
+		channel:    make(chan models.HubMessage, 1000),
 		RegChan:    make(chan Register),
 		UnregChann: make(chan UnRegister),
 

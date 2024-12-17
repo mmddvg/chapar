@@ -6,13 +6,9 @@ import (
 	"mmddvg/chapar/pkg/requests"
 )
 
-type Message interface {
-	RecieverId() uint64
-	Action() models.ActionType
-	Target() models.TargetType
-}
-
 func (h *Application) SendMessage(userId uint64, m requests.Message) {
+	var message any
+
 	if m.Target() == models.GroupTarget {
 		isMember, err := h.userDB.IsMember(m.RecieverId(), userId)
 		if err != nil {
@@ -25,13 +21,13 @@ func (h *Application) SendMessage(userId uint64, m requests.Message) {
 		}
 
 		if m.Action() == models.NewMessage {
-			_, err = h.messageDB.WriteGroup(models.NewGroupMessage{
+			message, err = h.messageDB.WriteGroup(models.NewGroupMessage{
 				GroupId:  m.RecieverId(),
 				Message:  m.Message,
 				SenderId: userId,
 			})
 		} else if m.Action() == models.EditMessage {
-			_, err = h.messageDB.EditGroup(models.EditGroupMessage{
+			message, err = h.messageDB.EditGroup(models.EditGroupMessage{
 				Id:         m.MessageId,
 				GroupId:    m.RecieverId(),
 				NewMessage: m.Message,
@@ -62,18 +58,20 @@ func (h *Application) SendMessage(userId uint64, m requests.Message) {
 		}
 
 		if m.Action() == models.NewMessage {
-			_, err = h.messageDB.WritePv(models.NewPvMessage{
+			message, err = h.messageDB.WritePv(models.NewPvMessage{
 				PvId:     pv.Id,
 				SenderId: userId,
 				Message:  m.Message,
 			})
 		} else if m.Action() == models.EditMessage {
-			_, err = h.messageDB.EditPv(models.EditPvMessage{
+
+			message, err = h.messageDB.EditPv(models.EditPvMessage{
 				Id:         m.MessageId,
 				NewMessage: m.Message,
 			})
 		} else if m.Action() == models.SeenAck {
-			_, err = h.messageDB.SeenAck(m.MessageId)
+
+			message, err = h.messageDB.SeenAck(m.MessageId)
 		}
 
 		if err != nil {
@@ -82,5 +80,5 @@ func (h *Application) SendMessage(userId uint64, m requests.Message) {
 		}
 	}
 
-	h.channel <- m
+	h.channel <- models.NewHubMessage(message, m.Reciever_id)
 }

@@ -3,6 +3,8 @@ package models
 import (
 	"database/sql"
 	"time"
+
+	"github.com/samber/lo"
 )
 
 type ActionType uint8
@@ -36,11 +38,11 @@ type NewPvMessage struct {
 }
 
 type GroupMessage struct {
-	Id        uint64 `db:"id" json:"id"`
-	GroupId   uint64 `db:"group_id" json:"group_id"`
-	Message   string `db:"message" json:"message"`
-	SenderId  uint64 `db:"sender_id" json:"sender_id"`
-	CreatedAt uint64 `db:"created_at" json:"created_at"`
+	Id        uint64    `db:"id" json:"id"`
+	GroupId   uint64    `db:"group_id" json:"group_id"`
+	Message   string    `db:"message" json:"message"`
+	SenderId  uint64    `db:"sender_id" json:"sender_id"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
 
 type NewGroupMessage struct {
@@ -58,4 +60,42 @@ type EditGroupMessage struct {
 	Id         uint64 `json:"id"`
 	GroupId    uint64 `json:"group_id"`
 	NewMessage string `json:"new_message"`
+}
+
+type HubMessage struct {
+	Id         uint64     `json:"id"`
+	RecieverId uint64     `json:"reciever_id"`
+	ChatId     uint64     `json:"chat_id"`
+	SenderId   uint64     `json:"sender_id"`
+	Message    string     `json:"message"`
+	SeenAt     *time.Time `json:"seen_at,omitempty"`
+	TargetType TargetType `json:"target_type"`
+	CreatedAt  time.Time  `json:"created_at"`
+}
+
+// reciverId is only used for private messages
+func NewHubMessage(message any, recieverId uint64) HubMessage {
+	switch v := message.(type) {
+	case PvMessage:
+		return HubMessage{
+			Id:         v.Id,
+			RecieverId: recieverId,
+			ChatId:     v.PvId,
+			SenderId:   v.SenderId,
+			Message:    v.Message,
+			SeenAt:     lo.Ternary[*time.Time](v.SeenAt.Valid, &v.SeenAt.Time, nil),
+			TargetType: PvTarget,
+			CreatedAt:  v.CreatedAt}
+	case GroupMessage:
+		return HubMessage{
+			Id:         v.Id,
+			ChatId:     v.GroupId,
+			SenderId:   v.SenderId,
+			Message:    v.Message,
+			TargetType: PvTarget,
+			CreatedAt:  v.CreatedAt,
+		}
+	}
+
+	panic("unhandled message type")
 }
