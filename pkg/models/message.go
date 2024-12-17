@@ -70,11 +70,12 @@ type HubMessage struct {
 	Message    string     `json:"message"`
 	SeenAt     *time.Time `json:"seen_at,omitempty"`
 	TargetType TargetType `json:"target_type"`
+	ActionType ActionType `json:"action_type"`
 	CreatedAt  time.Time  `json:"created_at"`
 }
 
 // reciverId is only used for private messages
-func NewHubMessage(message any, recieverId uint64) HubMessage {
+func NewHubMessage(message any, recieverId uint64, actionType ActionType) HubMessage {
 	switch v := message.(type) {
 	case PvMessage:
 		return HubMessage{
@@ -83,19 +84,23 @@ func NewHubMessage(message any, recieverId uint64) HubMessage {
 			ChatId:     v.PvId,
 			SenderId:   v.SenderId,
 			Message:    v.Message,
-			SeenAt:     lo.Ternary[*time.Time](v.SeenAt.Valid, &v.SeenAt.Time, nil),
+			SeenAt:     lo.Ternary(v.SeenAt.Valid, &v.SeenAt.Time, nil),
 			TargetType: PvTarget,
-			CreatedAt:  v.CreatedAt}
+			ActionType: actionType,
+			CreatedAt:  v.CreatedAt,
+		}
 	case GroupMessage:
 		return HubMessage{
 			Id:         v.Id,
 			ChatId:     v.GroupId,
+			RecieverId: v.GroupId,
 			SenderId:   v.SenderId,
 			Message:    v.Message,
-			TargetType: PvTarget,
+			TargetType: GroupTarget,
+			ActionType: actionType,
 			CreatedAt:  v.CreatedAt,
 		}
 	}
 
-	panic("unhandled message type")
+	panic("unhandled message type") // shouldn't panic in a real world app
 }

@@ -7,7 +7,9 @@ import (
 )
 
 func (h *Application) SendMessage(userId uint64, m requests.Message) {
-	var message any
+	var (
+		message any
+	)
 
 	if m.Target() == models.GroupTarget {
 		isMember, err := h.userDB.IsMember(m.RecieverId(), userId)
@@ -80,5 +82,5 @@ func (h *Application) SendMessage(userId uint64, m requests.Message) {
 		}
 	}
 
-	h.channel <- models.NewHubMessage(message, m.Reciever_id)
+	h.channel <- models.NewHubMessage(message, m.Reciever_id, m.Action())
 }
