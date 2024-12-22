@@ -9,10 +9,9 @@ type UserDB interface {
 	SignUp(requests.User) (models.User, error)
 	Get(uint64) (models.User, error)
 	GetByUsername(string) (models.User, error)
-	GetContacts(uint64) ([]uint64, error)
 	IsContact(userId uint64, contactId uint64) (bool, error)
-	AddContact(userId uint64, contactId uint64) ([]uint64, error)
-	RemoveContact(userId uint64, contactId uint64) ([]uint64, error)
+	AddContact(userId uint64, contactId uint64) ([]models.Contact, error)
+	RemoveContact(userId uint64, contactId uint64) ([]models.Contact, error)
 	CreatePv(userId uint64, targetId uint64) (models.PrivateChat, error)
 	GetPvOrCreate(userId, targetId uint64) (models.PrivateChat, error)
 	Block(userId uint64, targetId uint64) (uint64, error)
@@ -31,6 +30,7 @@ type UserDB interface {
 	RemoveGroupMember(groupId uint64, memberId uint64) (models.GroupMember, error)
 
 	GetChats(uint64) ([]models.User, []models.Group, error)
+	GetContacts(uint64) ([]models.Contact, error)
 }
 
 type MessageDB interface {

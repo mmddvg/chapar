@@ -63,3 +63,12 @@ func (h *httpWs) GetUser(c echo.Context) error {
 
 	return c.JSON(200, user)
 }
+
+func (h *httpWs) GetContacts(c echo.Context) error {
+	contacts, err := h.App.GetContacts(utils.GetUserId(c))
+	if err != nil {
+		return ErrHandler(c, err)
+	}
+
+	return c.JSON(200, contacts)
+}

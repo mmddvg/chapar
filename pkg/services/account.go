@@ -2,6 +2,7 @@ package services
 
 import (
 	"mmddvg/chapar/pkg/errs"
+	"mmddvg/chapar/pkg/models"
 	"mmddvg/chapar/pkg/requests"
 	"mmddvg/chapar/pkg/responses"
 	"mmddvg/chapar/pkg/services/utils"
@@ -58,19 +59,19 @@ func (app *Application) Login(body requests.Login) (responses.Login, error) {
 	return responses.NewLogin(user, token), nil
 }
 
-func (app *Application) AddContact(userId uint64, contactUsername string) ([]uint64, error) {
+func (app *Application) AddContact(userId uint64, contactUsername string) ([]models.Contact, error) {
 	user, err := app.userDB.GetByUsername(contactUsername)
 	if err != nil {
-		return []uint64{}, err
+		return []models.Contact{}, err
 	}
 
 	return app.userDB.AddContact(userId, user.Id)
 }
 
-func (app *Application) RemoveContact(userId uint64, contactUsername string) ([]uint64, error) {
+func (app *Application) RemoveContact(userId uint64, contactUsername string) ([]models.Contact, error) {
 	user, err := app.userDB.GetByUsername(contactUsername)
 	if err != nil {
-		return []uint64{}, err
+		return []models.Contact{}, err
 	}
 
 	return app.userDB.RemoveContact(userId, user.Id)
@@ -83,4 +84,8 @@ func (app *Application) GetUser(userId uint64) (responses.Login, error) {
 	}
 
 	return responses.NewLogin(user, ""), nil
+}
+
+func (app *Application) GetContacts(userId uint64) ([]models.Contact, error) {
+	return app.userDB.GetContacts(userId)
 }

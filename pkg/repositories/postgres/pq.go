@@ -80,9 +80,22 @@ func (r *PostgresRepo) GetByUsername(userName string) (models.User, error) {
 	}
 	return user, nil
 }
-func (r *PostgresRepo) GetContacts(userID uint64) ([]uint64, error) {
-	query := `SELECT contact_id FROM contacts WHERE user_id = $1`
-	var contacts []uint64
+func (r *PostgresRepo) GetContacts(userID uint64) ([]models.Contact, error) {
+	query := `SELECT 
+    contacts.contact_id AS contact_id,
+    users.username AS contact_username,
+    private_chats.id AS pv_id
+	FROM contacts JOIN 
+    users ON contacts.contact_id = users.id
+	LEFT JOIN 
+    private_chats ON 
+    (private_chats.user1 = contacts.user_id AND private_chats.user2 = contacts.contact_id)
+    OR 
+    (private_chats.user2 = contacts.user_id AND private_chats.user1 = contacts.contact_id)
+	WHERE 
+    contacts.user_id = $1;
+`
+	var contacts []models.Contact
 	err := r.db.Select(&contacts, query, userID)
 	if err != nil {
 		return nil, errs.NewUnexpected(err)
@@ -100,7 +113,7 @@ func (r *PostgresRepo) IsContact(userID, contactID uint64) (bool, error) {
 	return exists, nil
 }
 
-func (r *PostgresRepo) AddContact(userID, contactID uint64) ([]uint64, error) {
+func (r *PostgresRepo) AddContact(userID, contactID uint64) ([]models.Contact, error) {
 	query := `INSERT INTO contacts (user_id, contact_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`
 	_, err := r.db.Exec(query, userID, contactID)
 	if err != nil {
@@ -112,7 +125,7 @@ func (r *PostgresRepo) AddContact(userID, contactID uint64) ([]uint64, error) {
 	return r.GetContacts(userID)
 }
 
-func (r *PostgresRepo) RemoveContact(userID, contactID uint64) ([]uint64, error) {
+func (r *PostgresRepo) RemoveContact(userID, contactID uint64) ([]models.Contact, error) {
 	query := `DELETE FROM contacts WHERE user_id = $1 AND contact_id = $2`
 	_, err := r.db.Exec(query, userID, contactID)
 	if err != nil {

@@ -36,6 +36,7 @@ func Initiate(app *services.Application) {
 
 	r.GET("/hello", h.Hello)
 	r.GET("/me", h.GetUser)
+	r.GET("/contacts", h.GetContacts)
 	r.GET("/chats", h.GetChats)
 	r.GET("/pv/:id/messages", h.GetPvMessages)
 	r.GET("/group/:id/messages", h.GetGroupMessages)
