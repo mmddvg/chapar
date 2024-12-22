@@ -29,7 +29,7 @@ type UserDB interface {
 	AddGroupMember(groupId uint64, memberId uint64) (models.GroupMember, error)
 	RemoveGroupMember(groupId uint64, memberId uint64) (models.GroupMember, error)
 
-	GetChats(uint64) ([]models.User, []models.Group, error)
+	GetChats(uint64) ([]models.PrivateChat, []models.Group, error)
 	GetContacts(uint64) ([]models.Contact, error)
 }
 

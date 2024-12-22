@@ -419,10 +419,10 @@ func (r *PostgresRepo) SeenAck(messageId uint64) (models.PvMessage, error) {
 	return res, nil
 }
 
-func (r *PostgresRepo) GetChats(userId uint64) ([]models.User, []models.Group, error) {
-	users := []models.User{}
+func (r *PostgresRepo) GetChats(userId uint64) ([]models.PrivateChat, []models.Group, error) {
+	users := []models.PrivateChat{}
 	groups := []models.Group{}
-	err := r.db.Select(&users, "SELECT * FROM users WHERE id IN (SELECT user1 FROM private_chats WHERE user2 = $1 UNION ALL SELECT user2 FROM private_chats WHERE user1 = $1);", userId)
+	err := r.db.Select(&users, "SELECT * FROM private_chats WHERE user2 = $1 UNION ALL SELECT * FROM private_chats WHERE user1 = $1;", userId)
 	if err != nil {
 		return users, groups, errs.NewUnexpected(err)
 	}

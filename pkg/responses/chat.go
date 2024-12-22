@@ -1,26 +1,29 @@
 package responses
 
-import "mmddvg/chapar/pkg/models"
+import (
+	"mmddvg/chapar/pkg/models"
+
+	"github.com/samber/lo"
+)
 
 type ChatList struct {
-	Users  []User         `json:"users"`
+	Pvs    []PvInfo       `json:"pvs"`
 	Groups []models.Group `json:"groups"`
 }
 
-func NewChatList(users []models.User, groups []models.Group) ChatList {
-	tmp := []User{}
+func NewChatList(userId uint64, users []models.PrivateChat, groups []models.Group) ChatList {
+	tmp := []PvInfo{}
 
 	for _, v := range users {
-		tmp = append(tmp, User{Id: v.Id, Name: v.Name, Username: v.UserName})
+		tmp = append(tmp, PvInfo{Id: v.Id, UserId: lo.Ternary(v.User1 == userId, v.User2, v.User1)})
 	}
 	return ChatList{
-		Users:  tmp,
+		Pvs:    tmp,
 		Groups: groups,
 	}
 }
 
-type User struct {
-	Id       uint64 `json:"id"`
-	Name     string `json:"name"`
-	Username string `json:"username"`
+type PvInfo struct {
+	Id     uint64 `json:"id"`
+	UserId uint64 `json:"user_id"`
 }

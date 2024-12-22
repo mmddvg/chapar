@@ -11,5 +11,5 @@ func (app *Application) GetChats(userId uint64) (responses.ChatList, error) {
 		return responses.ChatList{}, err
 	}
 
-	return responses.NewChatList(users, groups), nil
+	return responses.NewChatList(userId, users, groups), nil
 }
