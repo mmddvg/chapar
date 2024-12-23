@@ -13,5 +13,6 @@ type User struct {
 type Contact struct {
 	ContactId       uint64  `db:"contact_id" json:"contact_id"`
 	ContactUsername string  `db:"contact_username" json:"contact_username"`
+	Name            string  `db:"name"  json:"name"`
 	PvId            *uint64 `db:"pv_id" json:"pv_id"`
 }

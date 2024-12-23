@@ -84,6 +84,7 @@ func (r *PostgresRepo) GetContacts(userID uint64) ([]models.Contact, error) {
 	query := `SELECT
     contacts.contact_id AS contact_id,
     users.username AS contact_username,
+    users.name AS name,
     private_chats.id AS pv_id
 	FROM contacts JOIN
     users ON contacts.contact_id = users.id
