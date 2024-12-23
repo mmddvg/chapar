@@ -35,7 +35,8 @@ func Initiate(app *services.Application) {
 	r := e.Group("/restricted", echojwt.WithConfig(config))
 
 	r.GET("/hello", h.Hello)
-	r.GET("/me", h.GetUser)
+	r.GET("/me", h.GetMe)
+	r.GET("/user/:user_id", h.GetUser)
 	r.GET("/contacts", h.GetContacts)
 	r.GET("/chats", h.GetChats)
 	r.GET("/pv/:id/messages", h.GetPvMessages)

@@ -81,18 +81,18 @@ func (r *PostgresRepo) GetByUsername(userName string) (models.User, error) {
 	return user, nil
 }
 func (r *PostgresRepo) GetContacts(userID uint64) ([]models.Contact, error) {
-	query := `SELECT 
+	query := `SELECT
     contacts.contact_id AS contact_id,
     users.username AS contact_username,
     private_chats.id AS pv_id
-	FROM contacts JOIN 
+	FROM contacts JOIN
     users ON contacts.contact_id = users.id
-	LEFT JOIN 
-    private_chats ON 
+	LEFT JOIN
+    private_chats ON
     (private_chats.user1 = contacts.user_id AND private_chats.user2 = contacts.contact_id)
-    OR 
+    OR
     (private_chats.user2 = contacts.user_id AND private_chats.user1 = contacts.contact_id)
-	WHERE 
+	WHERE
     contacts.user_id = $1;
 `
 	var contacts []models.Contact
@@ -162,8 +162,8 @@ func (r *PostgresRepo) RemoveGroupMember(groupId uint64, memberId uint64) (model
 
 func (r *PostgresRepo) CreatePv(userID, targetID uint64) (models.PrivateChat, error) {
 	query := `
-		INSERT INTO private_chats (user1, user2) 
-		VALUES ($1, $2) 
+		INSERT INTO private_chats (user1, user2)
+		VALUES ($1, $2)
 		RETURNING id, user1, user2, created_at`
 	var chat models.PrivateChat
 	err := r.db.Get(&chat, query, userID, targetID)
@@ -178,16 +178,16 @@ func (r *PostgresRepo) CreatePv(userID, targetID uint64) (models.PrivateChat, er
 
 // TODO : ppostgres hashmap index ?
 func (r *PostgresRepo) GetPvOrCreate(user1Id, user2Id uint64) (models.PrivateChat, error) {
-	query := `SELECT * FROM private_chats WHERE 
-                (user1 = $1 AND user2 = $2) OR 
+	query := `SELECT * FROM private_chats WHERE
+                (user1 = $1 AND user2 = $2) OR
                 (user1 = $2 AND user2 = $1);`
 
 	var chat models.PrivateChat
 	err := r.db.Get(&chat, query, user1Id, user2Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			insertQuery := `INSERT INTO private_chats (user1, user2) 
-                            VALUES ($1, $2) 
+			insertQuery := `INSERT INTO private_chats (user1, user2)
+                            VALUES ($1, $2)
                             RETURNING *;`
 			err = r.db.Get(&chat, insertQuery, user1Id, user2Id)
 			if err != nil {
@@ -212,8 +212,8 @@ func (r *PostgresRepo) WritePv(newMessage models.NewPvMessage) (models.PvMessage
 
 func (r *PostgresRepo) WriteGroup(newMessage models.NewGroupMessage) (models.GroupMessage, error) {
 	query := `
-		INSERT INTO group_messages 
-		VALUES ($1, $2, $3, $4, $5) 
+		INSERT INTO group_messages
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, group_id, message, sender_id, created_at`
 	var message models.GroupMessage
 	err := r.db.Get(&message, query, GenerateId(), newMessage.GroupId, newMessage.Message, newMessage.SenderId, time.Now())
@@ -422,7 +422,7 @@ func (r *PostgresRepo) SeenAck(messageId uint64) (models.PvMessage, error) {
 func (r *PostgresRepo) GetChats(userId uint64) ([]models.PrivateChat, []models.Group, error) {
 	users := []models.PrivateChat{}
 	groups := []models.Group{}
-	err := r.db.Select(&users, "SELECT * FROM private_chats WHERE user2 = $1 UNION ALL SELECT * FROM private_chats WHERE user1 = $1;", userId)
+	err := r.db.Select(&users, "SELECT * FROM private_chats WHERE user2 = $1 UNION SELECT * FROM private_chats WHERE user1 = $1;", userId)
 	if err != nil {
 		return users, groups, errs.NewUnexpected(err)
 	}

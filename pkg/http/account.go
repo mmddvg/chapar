@@ -3,6 +3,7 @@ package http
 import (
 	"mmddvg/chapar/pkg/requests"
 	"mmddvg/chapar/pkg/services/utils"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -55,8 +56,22 @@ func (h *httpWs) RemoveContact(c echo.Context) error {
 	return c.JSON(200, res)
 }
 
-func (h *httpWs) GetUser(c echo.Context) error {
+func (h *httpWs) GetMe(c echo.Context) error {
 	user, err := h.App.GetUser(utils.GetUserId(c))
+	if err != nil {
+		return ErrHandler(c, err)
+	}
+
+	return c.JSON(200, user)
+}
+
+func (h *httpWs) GetUser(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("user_id"), 10, 0)
+	if err != nil {
+		return c.String(400, "bad id")
+	}
+
+	user, err := h.App.GetUser(id)
 	if err != nil {
 		return ErrHandler(c, err)
 	}
