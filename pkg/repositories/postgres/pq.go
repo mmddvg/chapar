@@ -9,6 +9,7 @@ import (
 	"mmddvg/chapar/pkg/models"
 	"mmddvg/chapar/pkg/requests"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,7 +28,11 @@ type PostgresRepo struct {
 
 func NewPostgresRepo() *PostgresRepo {
 	var str string
-	Initialize(1) // TODO
+	id, err := strconv.ParseInt(os.Getenv("SERVER_ID"), 10, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+	Initialize(id)
 
 	if os.Getenv("POSTGRES_URI") != "" {
 		str = os.Getenv("POSTGRES_URI")
